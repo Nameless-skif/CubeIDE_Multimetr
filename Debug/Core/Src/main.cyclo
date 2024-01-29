@@ -7,7 +7,7 @@ main.c:435:13:MX_GPIO_Init	1
 main.c:482:6:StartDefaultTask	1
 main.c:500:6:StartLED1_Task	1
 main.c:519:6:StartADC_Task	1
-main.c:543:6:StartUART_Task	1
-main.c:578:6:StartTFT_Task	1
-main.c:607:6:HAL_TIM_PeriodElapsedCallback	2
-main.c:624:6:Error_Handler	1
+main.c:548:6:StartUART_Task	1
+main.c:574:6:StartTFT_Task	1
+main.c:598:6:HAL_TIM_PeriodElapsedCallback	2
+main.c:615:6:Error_Handler	1
