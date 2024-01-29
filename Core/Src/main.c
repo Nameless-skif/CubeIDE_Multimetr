@@ -185,7 +185,8 @@ int main(void)
 
   ILI9341_Fill_Screen(MYFON);
   ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
-  ILI9341_WriteString(0, 18, "The value of the ADC(V)", Font_11x18, WHITE, MYFON);
+  ILI9341_WriteString(0, 18, "The value of the ADC", Font_11x18, WHITE, MYFON);
+  ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
   HAL_Delay(100);
 
 //  HAL_ADC_Start(&hadc1);
@@ -553,7 +554,6 @@ void StartUART_Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-//	  ILI9341_WriteString(0, 36, ADC_char_res, Font_11x18, WHITE, MYFON);
 	HAL_UART_Transmit(&huart1, (uint8_t*)message, strlen(message), osWaitForever);
 	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
 	osDelay(100);
