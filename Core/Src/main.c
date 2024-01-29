@@ -20,7 +20,6 @@
 #include "main.h"
 #include "cmsis_os.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -179,16 +178,28 @@ int main(void)
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_ADC_Start(&hadc1);
 
   __HAL_SPI_ENABLE(DISP_SPI_PTR);
   ILI9341_Init();
   ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2);
 
   ILI9341_Fill_Screen(MYFON);
-  ILI9341_WriteString(0, 0, "Hi man!!", Font_11x18, WHITE, MYFON);
-  HAL_Delay(1000);
-  ILI9341_Fill_Screen(MYFON);
+  ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
+  ILI9341_WriteString(0, 18, "The value of the ADC(V)", Font_11x18, WHITE, MYFON);
+  HAL_Delay(100);
+
+//  HAL_ADC_Start(&hadc1);
+//  HAL_Delay(100);
+//  char ADC_char_res[100];
+//  float u_res = HAL_ADC_GetValue(&hadc1)* 3.3f / 4095.0f;
+//  sprintf(ADC_char_res, "%1.3f", u_res);
+//  ILI9341_WriteString(0, 36, ADC_char_res, Font_11x18, WHITE, MYFON);
+//  HAL_Delay(5000);
+//
+//  HAL_UART_Transmit(&huart1, (uint8_t*)ADC_char_res, strlen(ADC_char_res), osWaitForever);
+//  HAL_UART_Transmit(&huart1, " \n", 1, osWaitForever);
+
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -246,6 +257,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -451,6 +463,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -510,6 +523,9 @@ void StartADC_Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
+//	HAL_ADC_Start(&hadc1);
+//	HAL_Delay(100);
+
 	strcpy(msg.Buf,"Transmission of ADC reading \r\n\0");
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
 	osDelay(1);
@@ -527,12 +543,26 @@ void StartADC_Task(void *argument)
 void StartUART_Task(void *argument)
 {
   /* USER CODE BEGIN StartUART_Task */
-   QUEUE_t msg;
+//   QUEUE_t msg;
+   float u_res =0;
+   char ADC_char_res[20];
+   char message[] = "Value ADC ";
   /* Infinite loop */
   for(;;)
   {
-	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
-	HAL_UART_Transmit(&huart1, (uint8_t)msg.Buf, strlen(msg.Buf), osWaitForever);
+	  HAL_ADC_Start(&hadc1);
+	  HAL_Delay(100);
+	  u_res = HAL_ADC_GetValue(&hadc1)* 3.3f / 4095.0f;
+	  sprintf(ADC_char_res, "%1.3f", u_res);
+	  HAL_UART_Transmit(&huart1, (uint8_t*)message, strlen(message), osWaitForever);
+	  HAL_UART_Transmit(&huart1, (uint8_t*)ADC_char_res, strlen(ADC_char_res), osWaitForever);
+	  HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
+//	  ILI9341_WriteString(0, 36, ADC_char_res, Font_11x18, WHITE, MYFON);
+
+//	HAL_UART_Transmit(&huart1, " Value ADC ", 10, osWaitForever);
+//	HAL_UART_Transmit(&huart1, ADC_char_res, 5, osWaitForever);
+//	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
+//	HAL_UART_Transmit(&huart1, (uint8_t)msg.Buf, strlen(msg.Buf), osWaitForever);
     osDelay(1);
   }
   /* USER CODE END StartUART_Task */
@@ -548,19 +578,19 @@ void StartUART_Task(void *argument)
 void StartTFT_Task(void *argument)
 {
   /* USER CODE BEGIN StartTFT_Task */
-  QUEUE_t msg;
+//  QUEUE_t msg;
   float u_res =0;
-  char ADC_char_res[100];
-
+  char adc_chr[20];
   /* Infinite loop */
   for(;;)
   {
-	ILI9341_WriteString(0, 0, "Transmission of ADC reading", Font_11x18, WHITE, MYFON);
-//	ILI9341_Fill_Screen(BLUE);
-	u_res = (float)HAL_ADC_GetValue(&hadc1)* 3.3f / 4095.0f;
-	sprintf(ADC_char_res, "%1.2f", u_res);
-	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
-	ILI9341_WriteString(18, 0, ADC_char_res, Font_11x18, WHITE, MYFON);
+	HAL_ADC_Start(&hadc1);
+	HAL_Delay(100);
+	u_res = HAL_ADC_GetValue(&hadc1)* 3.3f / 4095.0f;
+//	sprintf(adc_chr, "%1.3f", u_res);
+//	ILI9341_WriteString(0, 36, adc_chr, Font_11x18, WHITE, MYFON);
+//	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
+
     osDelay(1);
   }
   /* USER CODE END StartTFT_Task */
