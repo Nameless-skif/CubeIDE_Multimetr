@@ -38,7 +38,7 @@ Core/Src/freertos.o: ../Core/Src/freertos.c \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
  ../Core/Inc/fonts.h ../Core/Inc/ILI9341_GFX.h ../Core/Inc/main.h \
- ../Core/Inc/xpt2046_touch.h
+ ../Core/Inc/xpt2046_touch.h ../Core/Inc/INA219.h
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
 ../Core/Inc/FreeRTOSConfig.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h:
@@ -82,3 +82,4 @@ Core/Src/freertos.o: ../Core/Src/freertos.c \
 ../Core/Inc/ILI9341_GFX.h:
 ../Core/Inc/main.h:
 ../Core/Inc/xpt2046_touch.h:
+../Core/Inc/INA219.h:

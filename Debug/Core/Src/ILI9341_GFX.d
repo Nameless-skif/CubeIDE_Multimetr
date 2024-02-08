@@ -30,7 +30,7 @@ Core/Src/ILI9341_GFX.o: ../Core/Src/ILI9341_GFX.c \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
  ../Core/Inc/fonts.h ../Core/Inc/ILI9341_GFX.h \
- ../Core/Inc/xpt2046_touch.h
+ ../Core/Inc/xpt2046_touch.h ../Core/Inc/INA219.h
 ../Core/Inc/ILI9341_GFX.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
@@ -65,3 +65,4 @@ Core/Src/ILI9341_GFX.o: ../Core/Src/ILI9341_GFX.c \
 ../Core/Inc/fonts.h:
 ../Core/Inc/ILI9341_GFX.h:
 ../Core/Inc/xpt2046_touch.h:
+../Core/Inc/INA219.h:

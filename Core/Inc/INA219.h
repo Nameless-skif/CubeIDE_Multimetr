@@ -12,6 +12,7 @@
 
 #include <stdbool.h>
 
+
 #define INA219_ADDRESS 							(0x40)
 
 //
@@ -66,7 +67,7 @@
 #define	INA219_CONFIG_MODE_ADCOFF				0x04 /**< ADC off */
 #define	INA219_CONFIG_MODE_SVOLT_CONTINUOUS		0x05 /**< shunt voltage continuous */
 #define	INA219_CONFIG_MODE_BVOLT_CONTINUOUS		0x06 /**< bus voltage continuous */
-#define	INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS 0x07
+#define	INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS 0x07 /**< bus and shunt voltage continuous */
 
 typedef struct
 {
@@ -75,11 +76,6 @@ typedef struct
 } INA219_t;
 
 enum BatteryState {Battery_START,Battery_OK, Battery_LOW}; // To help health check function sufficiently diagnose problems
-bool isFirst;
-
-uint16_t ina219_calibrationValue;
-int16_t ina219_currentDivider_mA;
-int16_t ina219_powerMultiplier_mW;
 
 int INA219_GetDeltaTime_ms();
 uint8_t INA219_Init(INA219_t *ina219, I2C_HandleTypeDef *i2c, uint8_t Address);

@@ -147,7 +147,7 @@ void StartTFT_Task(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+INA219_t ina219;
 /* USER CODE END 0 */
 
 /**
@@ -193,18 +193,32 @@ int main(void)
   ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
   HAL_Delay(100);
 
+  unsigned char uart_tx_buff[100];
+  uint16_t vbus, vshunt, current, config, power;
+  while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
+     {
 
-//  HAL_ADC_Start(&hadc1);
-//  HAL_Delay(100);
-//  char ADC_char_res[100];
-//  float u_res = HAL_ADC_GetValue(&hadc1)* 3.3f / 4095.0f;
-//  sprintf(ADC_char_res, "%1.3f", u_res);
-//  ILI9341_WriteString(0, 36, ADC_char_res, Font_11x18, WHITE, MYFON);
-//  HAL_Delay(5000);
-//
-//  HAL_UART_Transmit(&huart1, (uint8_t*)ADC_char_res, strlen(ADC_char_res), osWaitForever);
-//  HAL_UART_Transmit(&huart1, " \n", 1, osWaitForever);
+     }
+  sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
+  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+  config = Read16(&ina219, INA219_REG_CONFIG);
 
+  vbus = INA219_ReadBusVoltage(&ina219);
+  vshunt = INA219_ReadShuntVolage(&ina219);
+  current = INA219_ReadCurrent(&ina219);
+
+  sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
+  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+
+  sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vshunt);
+  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+  sprintf(uart_tx_buff, "current: %hu mA\r\n",current);
+  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+  HAL_Delay(500000);
+//  HAL_UART_Transmit(&huart2, uart_tx_buff, strlen(uart_tx_buff), 100);
 
   /* USER CODE END 2 */
 

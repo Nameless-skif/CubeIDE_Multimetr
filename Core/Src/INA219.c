@@ -11,6 +11,13 @@
 #include "INA219.h"
 enum BatteryState batteryState;
 
+
+bool isFirst;
+
+uint16_t ina219_calibrationValue;
+int16_t ina219_currentDivider_mA;
+int16_t ina219_powerMultiplier_mW;
+
 /*
  * @brief:		Read a register from the IN219 sensor.
  * @param:		Pointer to the device object that was made from the struct. EX:  (&ina219)
@@ -179,7 +186,7 @@ float INA219_GetMiliWattsDeltaTime(INA219_t *ina219)
  * @retval:		floating point number giving back a value for mili-watts
  */
 float sample[10]; // this can be set to any number. REmeber the bigger the sample amount the longer it takes to become accurate.
-int index = 0;
+int index_ina219 = 0;
 float INA219_GetAVGMiliWatt(INA219_t *ina219)
 {
 	// Energy = Power * Time
@@ -188,19 +195,19 @@ float INA219_GetAVGMiliWatt(INA219_t *ina219)
 	{
 		isFirst = true;
 		sample[0] = INA219_ReadPower(ina219);
-		index = 1;
+		index_ina219 = 1;
 	}
 	else
 	{
-		if(index != 10)
+		if(index_ina219 != 10)
 		{
-			sample[index] = INA219_ReadPower(ina219);
-			index++;
+			sample[index_ina219] = INA219_ReadPower(ina219);
+			index_ina219++;
 		}
 		else
 		{
-			index = 0;
-			sample[index] = INA219_ReadPower(ina219);
+			index_ina219 = 0;
+			sample[index_ina219] = INA219_ReadPower(ina219);
 		}
 
 	}

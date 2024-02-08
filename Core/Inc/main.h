@@ -36,6 +36,7 @@ extern "C" {
 #include "xpt2046_touch.h"
 #include "stdio.h"
 #include "string.h"
+#include "INA219.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
