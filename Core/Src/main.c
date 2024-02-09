@@ -113,6 +113,18 @@ const osThreadAttr_t TFT_Task_attributes = {
   .stack_size = sizeof(TFT_TaskBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for INA219_Task */
+osThreadId_t INA219_TaskHandle;
+uint32_t INA219_TaskBuffer[ 128 ];
+osStaticThreadDef_t INA219_TaskControlBlock;
+const osThreadAttr_t INA219_Task_attributes = {
+  .name = "INA219_Task",
+  .cb_mem = &INA219_TaskControlBlock,
+  .cb_size = sizeof(INA219_TaskControlBlock),
+  .stack_mem = &INA219_TaskBuffer[0],
+  .stack_size = sizeof(INA219_TaskBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
 uint8_t myQueue01Buffer[ 10 * sizeof( QUEUE_t ) ];
@@ -140,6 +152,7 @@ void StartLED1_Task(void *argument);
 void StartADC_Task(void *argument);
 void StartUART_Task(void *argument);
 void StartTFT_Task(void *argument);
+void StartINA219_Task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -194,31 +207,37 @@ int main(void)
   HAL_Delay(100);
 
   unsigned char uart_tx_buff[100];
-  uint16_t vbus, vshunt, current, config, power;
+  uint16_t vbus, vshunt, current, config;
+  float current_correctly;
   while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
-     {
+       {
 
-     }
-  sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
-  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-  config = Read16(&ina219, INA219_REG_CONFIG);
+        }
+   sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
+   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//   config = Read16(&ina219, INA219_REG_CONFIG);
 
-  vbus = INA219_ReadBusVoltage(&ina219);
-  vshunt = INA219_ReadShuntVolage(&ina219);
-  current = INA219_ReadCurrent(&ina219);
-
-  sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
-  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-
-
-  sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vshunt);
-  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-
-  sprintf(uart_tx_buff, "current: %hu mA\r\n",current);
-  HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-
-  HAL_Delay(500000);
-//  HAL_UART_Transmit(&huart2, uart_tx_buff, strlen(uart_tx_buff), 100);
+//   sprintf(uart_tx_buff, "configuration register: %hu\r\n",config);
+//   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//
+//   vbus = INA219_ReadBusVoltage(&ina219);
+//   vshunt = INA219_ReadShuntVolage(&ina219);
+//   current = INA219_ReadCurrent(&ina219);
+//   current_correctly = current/1.238;
+//
+//
+//   sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
+//   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//
+//
+//   sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vshunt);
+//   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//
+//   sprintf(uart_tx_buff, "current: %hu mA\r\n",current);
+//   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//
+//   sprintf(uart_tx_buff, "current_correctly: %1.3f mA\r\n",current_correctly);
+//   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
 
   /* USER CODE END 2 */
 
@@ -260,6 +279,9 @@ int main(void)
 
   /* creation of TFT_Task */
   TFT_TaskHandle = osThreadNew(StartTFT_Task, NULL, &TFT_Task_attributes);
+
+  /* creation of INA219_Task */
+  INA219_TaskHandle = osThreadNew(StartINA219_Task, NULL, &INA219_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -635,6 +657,44 @@ void StartTFT_Task(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartTFT_Task */
+}
+
+/* USER CODE BEGIN Header_StartINA219_Task */
+/**
+* @brief Function implementing the INA219_Task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartINA219_Task */
+void StartINA219_Task(void *argument)
+{
+  /* USER CODE BEGIN StartINA219_Task */
+  unsigned char uart_tx_buff[10];
+  uint16_t vbus, vshunt, current;
+  float current_correctly;
+  /* Infinite loop */
+  for(;;)
+  {
+	vbus = INA219_ReadBusVoltage(&ina219);
+	vshunt = INA219_ReadShuntVolage(&ina219);
+	current_correctly = INA219_ReadCurrent(&ina219)/1.238f;
+
+
+//	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
+//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+//	sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vshunt);
+//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//
+//	sprintf(uart_tx_buff, "current: %hu mA\r\n",current);
+//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//
+//	sprintf(uart_tx_buff, "current_correctly: %1.3f mA\r\n",current_correctly);
+//    HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+    osDelay(1);
+  }
+  /* USER CODE END StartINA219_Task */
 }
 
 /**
