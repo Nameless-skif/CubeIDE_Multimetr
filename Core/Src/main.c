@@ -125,6 +125,18 @@ const osThreadAttr_t INA219_Task_attributes = {
   .stack_size = sizeof(INA219_TaskBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for InitMyDevice */
+osThreadId_t InitMyDeviceHandle;
+uint32_t InitMyDeviceBuffer[ 128 ];
+osStaticThreadDef_t InitMyDeviceControlBlock;
+const osThreadAttr_t InitMyDevice_attributes = {
+  .name = "InitMyDevice",
+  .cb_mem = &InitMyDeviceControlBlock,
+  .cb_size = sizeof(InitMyDeviceControlBlock),
+  .stack_mem = &InitMyDeviceBuffer[0],
+  .stack_size = sizeof(InitMyDeviceBuffer),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
 uint8_t myQueue01Buffer[ 10 * sizeof( QUEUE_t ) ];
@@ -153,6 +165,7 @@ void StartADC_Task(void *argument);
 void StartUART_Task(void *argument);
 void StartTFT_Task(void *argument);
 void StartINA219_Task(void *argument);
+void StartInitMyDevice(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -196,26 +209,30 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  __HAL_SPI_ENABLE(DISP_SPI_PTR);
-  ILI9341_Init();
-  ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2);
+  /* Код для TFT ILI9341 2.4   */
+//  __HAL_SPI_ENABLE(DISP_SPI_PTR);
+//  ILI9341_Init();
+//  ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2);
+//
+//  ILI9341_Fill_Screen(MYFON);
+//  ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
+//  ILI9341_WriteString(0, 18, "The value of the ADC", Font_11x18, WHITE, MYFON);
+//  ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
+//  HAL_Delay(100);
+//
+//
+//  /* Код для ina219   */
+//  unsigned char uart_tx_buff[100];
+//  uint16_t vbus, vshunt, current, config;
+//  float current_correctly;
+//  while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
+//       {
+//
+//        }
+//   sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
+//   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
 
-  ILI9341_Fill_Screen(MYFON);
-  ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
-  ILI9341_WriteString(0, 18, "The value of the ADC", Font_11x18, WHITE, MYFON);
-  ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
-  HAL_Delay(100);
 
-  unsigned char uart_tx_buff[100];
-  uint16_t vbus, vshunt, current, config;
-  float current_correctly;
-  while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
-       {
-
-        }
-   sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
-   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-//   config = Read16(&ina219, INA219_REG_CONFIG);
 
 //   sprintf(uart_tx_buff, "configuration register: %hu\r\n",config);
 //   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
@@ -282,6 +299,9 @@ int main(void)
 
   /* creation of INA219_Task */
   INA219_TaskHandle = osThreadNew(StartINA219_Task, NULL, &INA219_Task_attributes);
+
+  /* creation of InitMyDevice */
+  InitMyDeviceHandle = osThreadNew(StartInitMyDevice, NULL, &InitMyDevice_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -677,7 +697,7 @@ void StartINA219_Task(void *argument)
   {
 	vbus = INA219_ReadBusVoltage(&ina219);
 	vshunt = INA219_ReadShuntVolage(&ina219);
-	current_correctly = INA219_ReadCurrent(&ina219)/1.238f;
+//	current_correctly = INA219_ReadCurrent(&ina219)/1.238f;
 
 
 //	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
@@ -695,6 +715,50 @@ void StartINA219_Task(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartINA219_Task */
+}
+
+/* USER CODE BEGIN Header_StartInitMyDevice */
+/**
+* @brief Function implementing the InitMyDevice thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartInitMyDevice */
+void StartInitMyDevice(void *argument)
+{
+  /* USER CODE BEGIN StartInitMyDevice */
+	 unsigned char uart_tx_buff[100];
+     uint16_t vbus, vshunt, current, config;
+	 float current_correctly;
+  /* Infinite loop */
+  for(;;)
+  {
+
+
+	  __HAL_SPI_ENABLE(DISP_SPI_PTR);
+	   ILI9341_Init();
+	   ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2);
+
+	   ILI9341_Fill_Screen(MYFON);
+	   ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
+	   ILI9341_WriteString(0, 18, "The value of the ADC", Font_11x18, WHITE, MYFON);
+	   ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
+	   HAL_Delay(100);
+
+
+	   /* Код для ina219   */
+
+	   while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
+	        {
+
+	         }
+	    sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
+	    HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+    osDelay(1);
+    vTaskSuspend(InitMyDeviceHandle);
+  }
+  /* USER CODE END StartInitMyDevice */
 }
 
 /**
