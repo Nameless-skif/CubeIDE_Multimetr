@@ -29,8 +29,16 @@
 typedef StaticTask_t osStaticThreadDef_t;
 typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
+
+typedef enum {
+	vBus,
+	vShunt,
+	Current
+} DataTask_t;
+
 typedef struct {
-	char Buf[100];
+	char Buf[30];
+	char mess[10];
 } QUEUE_t;
 /* USER CODE END PTD */
 
@@ -65,21 +73,9 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = sizeof(defaultTaskBuffer),
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for LED1_Task */
-osThreadId_t LED1_TaskHandle;
-uint32_t LED1_TaskBuffer[ 128 ];
-osStaticThreadDef_t LED1_TaskControlBlock;
-const osThreadAttr_t LED1_Task_attributes = {
-  .name = "LED1_Task",
-  .cb_mem = &LED1_TaskControlBlock,
-  .cb_size = sizeof(LED1_TaskControlBlock),
-  .stack_mem = &LED1_TaskBuffer[0],
-  .stack_size = sizeof(LED1_TaskBuffer),
-  .priority = (osPriority_t) osPriorityLow,
-};
 /* Definitions for ADC_Task */
 osThreadId_t ADC_TaskHandle;
-uint32_t ADC_TaskBuffer[ 128 ];
+uint32_t ADC_TaskBuffer[ 500 ];
 osStaticThreadDef_t ADC_TaskControlBlock;
 const osThreadAttr_t ADC_Task_attributes = {
   .name = "ADC_Task",
@@ -87,7 +83,7 @@ const osThreadAttr_t ADC_Task_attributes = {
   .cb_size = sizeof(ADC_TaskControlBlock),
   .stack_mem = &ADC_TaskBuffer[0],
   .stack_size = sizeof(ADC_TaskBuffer),
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow2,
 };
 /* Definitions for UART_Task */
 osThreadId_t UART_TaskHandle;
@@ -113,12 +109,12 @@ const osThreadAttr_t TFT_Task_attributes = {
   .stack_size = sizeof(TFT_TaskBuffer),
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for INA219_Task */
-osThreadId_t INA219_TaskHandle;
-uint32_t INA219_TaskBuffer[ 128 ];
+/* Definitions for INA219_Current */
+osThreadId_t INA219_CurrentHandle;
+uint32_t INA219_TaskBuffer[ 550 ];
 osStaticThreadDef_t INA219_TaskControlBlock;
-const osThreadAttr_t INA219_Task_attributes = {
-  .name = "INA219_Task",
+const osThreadAttr_t INA219_Current_attributes = {
+  .name = "INA219_Current",
   .cb_mem = &INA219_TaskControlBlock,
   .cb_size = sizeof(INA219_TaskControlBlock),
   .stack_mem = &INA219_TaskBuffer[0],
@@ -136,6 +132,20 @@ const osThreadAttr_t InitMyDevice_attributes = {
   .stack_mem = &InitMyDeviceBuffer[0],
   .stack_size = sizeof(InitMyDeviceBuffer),
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for INA219_vBus */
+osThreadId_t INA219_vBusHandle;
+const osThreadAttr_t INA219_vBus_attributes = {
+  .name = "INA219_vBus",
+  .stack_size = 300 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for INA219_vShunt */
+osThreadId_t INA219_vShuntHandle;
+const osThreadAttr_t INA219_vShunt_attributes = {
+  .name = "INA219_vShunt",
+  .stack_size = 300 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
@@ -160,12 +170,13 @@ static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_I2C1_Init(void);
 void StartDefaultTask(void *argument);
-void StartLED1_Task(void *argument);
 void StartADC_Task(void *argument);
 void StartUART_Task(void *argument);
 void StartTFT_Task(void *argument);
-void StartINA219_Task(void *argument);
+void StartINA219_Current_Task(void *argument);
 void StartInitMyDevice(void *argument);
+void INA219_vBus_Task(void *argument);
+void INA219_vShunt_Task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -266,6 +277,7 @@ int main(void)
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
+
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -285,9 +297,6 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of LED1_Task */
-  LED1_TaskHandle = osThreadNew(StartLED1_Task, NULL, &LED1_Task_attributes);
-
   /* creation of ADC_Task */
   ADC_TaskHandle = osThreadNew(StartADC_Task, NULL, &ADC_Task_attributes);
 
@@ -297,11 +306,17 @@ int main(void)
   /* creation of TFT_Task */
   TFT_TaskHandle = osThreadNew(StartTFT_Task, NULL, &TFT_Task_attributes);
 
-  /* creation of INA219_Task */
-  INA219_TaskHandle = osThreadNew(StartINA219_Task, NULL, &INA219_Task_attributes);
+  /* creation of INA219_Current */
+  INA219_CurrentHandle = osThreadNew(StartINA219_Current_Task, NULL, &INA219_Current_attributes);
 
   /* creation of InitMyDevice */
   InitMyDeviceHandle = osThreadNew(StartInitMyDevice, NULL, &InitMyDevice_attributes);
+
+  /* creation of INA219_vBus */
+  INA219_vBusHandle = osThreadNew(INA219_vBus_Task, NULL, &INA219_vBus_attributes);
+
+  /* creation of INA219_vShunt */
+  INA219_vShuntHandle = osThreadNew(INA219_vShunt_Task, NULL, &INA219_vShunt_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -585,25 +600,6 @@ void StartDefaultTask(void *argument)
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_StartLED1_Task */
-/**
-* @brief Function implementing the LED1_Task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartLED1_Task */
-void StartLED1_Task(void *argument)
-{
-  /* USER CODE BEGIN StartLED1_Task */
-  /* Infinite loop */
-  for(;;)
-  {
-	HAL_GPIO_TogglePin(LED1_Blink_GPIO_Port, LED1_Blink_Pin);
-    osDelay(1);
-  }
-  /* USER CODE END StartLED1_Task */
-}
-
 /* USER CODE BEGIN Header_StartADC_Task */
 /**
 * @brief Function implementing the ADC_Task thread.
@@ -616,17 +612,18 @@ void StartADC_Task(void *argument)
   /* USER CODE BEGIN StartADC_Task */
    QUEUE_t msg;
    float u_res =0;
-   char ADC_char_res[20];
+   char ADC_char_res[6];
   /* Infinite loop */
   for(;;)
   {
+
 	HAL_ADC_Start(&hadc1);
-	HAL_Delay(100);
 	u_res = HAL_ADC_GetValue(&hadc1)* 3.3f / 4095.0f;
     sprintf(ADC_char_res, "%1.3f", u_res);
 	strcpy(msg.Buf,ADC_char_res);
+	strcpy(msg.mess,"ADC");
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
-	osDelay(100);
+	osDelay(200);
   }
   /* USER CODE END StartADC_Task */
 }
@@ -642,16 +639,15 @@ void StartUART_Task(void *argument)
 {
   /* USER CODE BEGIN StartUART_Task */
    QUEUE_t msg;
-   char message[] = "Value ADC ";
+   char message[] = "Value ADC = ";
   /* Infinite loop */
   for(;;)
   {
+	osDelay(400);
 	HAL_UART_Transmit(&huart1, (uint8_t*)message, strlen(message), osWaitForever);
 	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
-	osDelay(100);
 	HAL_UART_Transmit(&huart1, (uint8_t*)msg.Buf, strlen(msg.Buf), osWaitForever);
 	HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
-    osDelay(100);
   }
   /* USER CODE END StartUART_Task */
 }
@@ -670,51 +666,52 @@ void StartTFT_Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
-	osDelay(100);
-	ILI9341_WriteString(0, 36, msg.Buf, Font_11x18, WHITE, MYFON);
-
+	osMessageQueueGet(myQueue01Handle, &msg,0 ,10);
+	if(!strcmp(msg.mess, "ADC")) {
+			ILI9341_WriteString(0, 36, msg.Buf, Font_11x18, WHITE, MYFON);
+		 }
+	else if(!strcmp(msg.mess, "vBus")){
+			ILI9341_WriteString(0, 54, msg.Buf, Font_11x18, WHITE, MYFON);
+		}
+	else if(!strcmp(msg.mess, "vShunt")){
+				ILI9341_WriteString(0, 72, msg.Buf, Font_11x18, WHITE, MYFON);
+			}
+	else if(!strcmp(msg.mess, "Current")){
+				ILI9341_WriteString(0, 90, msg.Buf, Font_11x18, WHITE, MYFON);
+			}
+	else if(!strcmp(msg.mess,  "Current_correct")){
+					ILI9341_WriteString(0, 108, msg.Buf, Font_11x18, WHITE, MYFON);
+				}
     osDelay(1);
   }
   /* USER CODE END StartTFT_Task */
 }
 
-/* USER CODE BEGIN Header_StartINA219_Task */
+/* USER CODE BEGIN Header_StartINA219_Current_Task */
 /**
-* @brief Function implementing the INA219_Task thread.
+* @brief Function implementing the INA219_Current thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartINA219_Task */
-void StartINA219_Task(void *argument)
+/* USER CODE END Header_StartINA219_Current_Task */
+void StartINA219_Current_Task(void *argument)
 {
-  /* USER CODE BEGIN StartINA219_Task */
-  unsigned char uart_tx_buff[10];
-  uint16_t vbus, vshunt, current;
-  float current_correctly;
+  /* USER CODE BEGIN StartINA219_Current_Task */
+  QUEUE_t msg;
+  unsigned char uart_tx_buff[100];
+  uint16_t current;
   /* Infinite loop */
   for(;;)
   {
-	vbus = INA219_ReadBusVoltage(&ina219);
-	vshunt = INA219_ReadShuntVolage(&ina219);
-//	current_correctly = INA219_ReadCurrent(&ina219)/1.238f;
-
-
-//	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
-//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-
-//	sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vshunt);
-//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-//
-//	sprintf(uart_tx_buff, "current: %hu mA\r\n",current);
-//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-//
-//	sprintf(uart_tx_buff, "current_correctly: %1.3f mA\r\n",current_correctly);
-//    HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
-
-    osDelay(1);
+	current = INA219_ReadCurrent(&ina219);
+	//   current_correctly = current/1.238;
+	sprintf(uart_tx_buff, "Current: %hu mA\r\n",current);
+	strcpy(msg.mess,"Current");
+	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
+	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+    osDelay(700);
   }
-  /* USER CODE END StartINA219_Task */
+  /* USER CODE END StartINA219_Current_Task */
 }
 
 /* USER CODE BEGIN Header_StartInitMyDevice */
@@ -728,8 +725,6 @@ void StartInitMyDevice(void *argument)
 {
   /* USER CODE BEGIN StartInitMyDevice */
 	 unsigned char uart_tx_buff[100];
-     uint16_t vbus, vshunt, current, config;
-	 float current_correctly;
   /* Infinite loop */
   for(;;)
   {
@@ -752,13 +747,58 @@ void StartInitMyDevice(void *argument)
 	        {
 
 	         }
-	    sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
+	    sprintf(uart_tx_buff, "**********		Hello INA219 app	 **********\r\n");
 	    HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
 
     osDelay(1);
-    vTaskSuspend(InitMyDeviceHandle);
+    vTaskSuspend(InitMyDeviceHandle); //Блокировка задачи
   }
   /* USER CODE END StartInitMyDevice */
+}
+
+/* USER CODE BEGIN Header_INA219_vBus_Task */
+/**
+* @brief Function implementing the INA219_vBus thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_INA219_vBus_Task */
+void INA219_vBus_Task(void *argument)
+{
+  /* USER CODE BEGIN INA219_vBus_Task */
+  QUEUE_t msg;
+  unsigned char uart_tx_buff[100];
+  uint16_t vbus;
+  /* Infinite loop */
+  for(;;)
+  {
+	vbus = INA219_ReadBusVoltage(&ina219);
+	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
+	strcpy(msg.mess,"vBus");
+	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
+	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+
+    osDelay(700);
+  }
+  /* USER CODE END INA219_vBus_Task */
+}
+
+/* USER CODE BEGIN Header_INA219_vShunt_Task */
+/**
+* @brief Function implementing the INA219_vShunt thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_INA219_vShunt_Task */
+void INA219_vShunt_Task(void *argument)
+{
+  /* USER CODE BEGIN INA219_vShunt_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END INA219_vShunt_Task */
 }
 
 /**

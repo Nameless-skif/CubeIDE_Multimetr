@@ -70,7 +70,7 @@ extern TIM_HandleTypeDef htim4;
 void NMI_Handler(void)
 {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
-
+	 ILI9341_WriteString(0, 54, " NMI_Handler Exception", Font_11x18, WHITE, MYFON);
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
   while (1)
@@ -90,6 +90,7 @@ void HardFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+	  ILI9341_WriteString(0, 54, "HardFault_Handler Exception", Font_11x18, WHITE, MYFON);
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -100,7 +101,7 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
-
+	ILI9341_WriteString(0, 54, "MemManage_Handler Exception", Font_11x18, WHITE, MYFON);
   /* USER CODE END MemoryManagement_IRQn 0 */
   while (1)
   {
