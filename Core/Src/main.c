@@ -603,14 +603,34 @@ void StartUART_Task(void *argument)
 {
   /* USER CODE BEGIN StartUART_Task */
    QUEUE_t msg;
-   char message[] = "Value ADC = ";
+   char message_ADC[] = "Value ADC = ";
+   char message_vBus[] = "Value vBus[mV] = ";
+   char message_vShunt[] = "Value vShunt[mV] = ";
+   char message_Current[] = "Value Current[mA] = ";
   /* Infinite loop */
   for(;;)
   {
-	HAL_UART_Transmit(&huart1, (uint8_t*)message, strlen(message), osWaitForever);
-	osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
-	HAL_UART_Transmit(&huart1, (uint8_t*)msg.Buf, strlen(msg.Buf), osWaitForever);
-	HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
+	  osMessageQueueGet(myQueue01Handle, &msg,0 ,osWaitForever);
+	  if(!strcmp(msg.mess, "ADC")) {
+		    HAL_UART_Transmit(&huart1, (uint8_t*)message_ADC, strlen(message_ADC), osWaitForever);
+		  	HAL_UART_Transmit(&huart1, (uint8_t*)msg.Buf, strlen(msg.Buf), osWaitForever);
+		  	HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
+	  		 }
+	  else if(!strcmp(msg.mess, "vBus")){
+		    HAL_UART_Transmit(&huart1, (uint8_t*)message_vBus, strlen(message_vBus), osWaitForever);
+		  	HAL_UART_Transmit(&huart1, (uint8_t*)msg.Buf, strlen(msg.Buf), osWaitForever);
+		  	HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
+	  	  	  }
+	  else if(!strcmp(msg.mess, "vShunt")){
+		    HAL_UART_Transmit(&huart1, (uint8_t*)message_vShunt, strlen(message_vShunt), osWaitForever);
+		 	HAL_UART_Transmit(&huart1, (uint8_t*)msg.Buf, strlen(msg.Buf), osWaitForever);
+		 	HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
+	  	  	  }
+	  else if(!strcmp(msg.mess, "Current")){
+		    HAL_UART_Transmit(&huart1, (uint8_t*)message_Current, strlen(message_Current), osWaitForever);
+		 	HAL_UART_Transmit(&huart1, (uint8_t*)msg.Buf, strlen(msg.Buf), osWaitForever);
+		 	HAL_UART_Transmit(&huart1, (uint8_t*)" \n", 2, osWaitForever);
+	  	  	  }
 	osDelay(500);
   }
   /* USER CODE END StartUART_Task */
@@ -635,17 +655,14 @@ void StartTFT_Task(void *argument)
 			ILI9341_WriteString(0, 36, msg.Buf, Font_11x18, WHITE, MYFON);
 		 }
 	else if(!strcmp(msg.mess, "vBus")){
-			ILI9341_WriteString(0, 54, msg.Buf, Font_11x18, WHITE, MYFON);
+			ILI9341_WriteString(150, 54, msg.Buf, Font_11x18, WHITE, MYFON);
 		}
 	else if(!strcmp(msg.mess, "vShunt")){
-				ILI9341_WriteString(0, 72, msg.Buf, Font_11x18, WHITE, MYFON);
+				ILI9341_WriteString(150, 72, msg.Buf, Font_11x18, WHITE, MYFON);
 			}
 	else if(!strcmp(msg.mess, "Current")){
-				ILI9341_WriteString(0, 90, msg.Buf, Font_11x18, WHITE, MYFON);
+				ILI9341_WriteString(150, 90, msg.Buf, Font_11x18, WHITE, MYFON);
 			}
-	else if(!strcmp(msg.mess,  "Current_correct")){
-					ILI9341_WriteString(0, 108, msg.Buf, Font_11x18, WHITE, MYFON);
-				}
     osDelay(100);
   }
   /* USER CODE END StartTFT_Task */
@@ -668,11 +685,12 @@ void StartINA219_Current_Task(void *argument)
   for(;;)
   {
 	current = INA219_ReadCurrent(&ina219);
-	sprintf(uart_tx_buff, "Current: %hu mA\r\n",current);
+//	sprintf(uart_tx_buff, "Current: %hu mA\r\n",current);
+	sprintf(uart_tx_buff,"%hu",current);
 	strcpy(msg.mess,"Current");
 	strcpy(msg.Buf,uart_tx_buff);
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
-	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
     osDelay(300);
   }
   /* USER CODE END StartINA219_Current_Task */
@@ -700,6 +718,9 @@ void StartInitMyDevice(void *argument)
 	   ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
 	   ILI9341_WriteString(0, 18, "The value of the ADC", Font_11x18, WHITE, MYFON);
 	   ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
+	   ILI9341_WriteString(0, 54, "vBus[mV] ", Font_11x18, WHITE, MYFON);
+	   ILI9341_WriteString(0, 72, "vShunt[mV]", Font_11x18, WHITE, MYFON);
+	   ILI9341_WriteString(0, 90, "Current[mA] ", Font_11x18, WHITE, MYFON);
 	   HAL_Delay(100);
 	   /* Код для ina219   */
 	   while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
@@ -733,11 +754,12 @@ void INA219_vBus_Task(void *argument)
   for(;;)
   {
 	vbus = INA219_ReadBusVoltage(&ina219);
-	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
+//	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
+	sprintf(uart_tx_buff, "%hu",vbus);
 	strcpy(msg.mess,"vBus");
 	strcpy(msg.Buf,uart_tx_buff);
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
-	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
     osDelay(70);
   }
   /* USER CODE END INA219_vBus_Task */
@@ -760,11 +782,12 @@ void INA219_vShunt_Task(void *argument)
   for(;;)
   {
 	vShunt = INA219_ReadShuntVolage(&ina219);
-	sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vShunt);
+//	sprintf(uart_tx_buff, "vShunt: %hu mV\r\n",vShunt);
+	sprintf(uart_tx_buff, "%hu",vShunt);
 	strcpy(msg.mess,"vShunt");
 	strcpy(msg.Buf,uart_tx_buff);
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
-	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
+//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
 	osDelay(300);
   }
   /* USER CODE END INA219_vShunt_Task */
