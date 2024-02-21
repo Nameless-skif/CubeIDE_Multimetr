@@ -80,7 +80,7 @@ enum BatteryState {Battery_START,Battery_OK, Battery_LOW}; // To help health che
 int INA219_GetDeltaTime_ms();
 uint8_t INA219_Init(INA219_t *ina219, I2C_HandleTypeDef *i2c, uint8_t Address);
 uint16_t INA219_ReadBusVoltage(INA219_t *ina219);
-int16_t INA219_ReadCurrent(INA219_t *ina219);
+float INA219_ReadCurrent(INA219_t *ina219);
 int16_t INA219_ReadCurrent_raw(INA219_t *ina219);
 uint16_t INA219_ReadShuntVolage(INA219_t *ina219);
 uint16_t INA219_ReadPower(INA219_t *ina219);

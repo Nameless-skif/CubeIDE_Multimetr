@@ -2,7 +2,7 @@
 ../Core/Src/INA219.c:51:19:Write16	40	static
 ../Core/Src/INA219.c:64:10:INA219_ReadBusVoltage	24	static
 ../Core/Src/INA219.c:77:9:INA219_ReadCurrent_raw	24	static
-../Core/Src/INA219.c:90:9:INA219_ReadCurrent	24	static
+../Core/Src/INA219.c:90:7:INA219_ReadCurrent	24	static
 ../Core/Src/INA219.c:104:10:INA219_ReadShuntVolage	24	static
 ../Core/Src/INA219.c:116:10:INA219_ReadPower	24	static
 ../Core/Src/INA219.c:131:7:INA219_GetBatteryLife	40	static

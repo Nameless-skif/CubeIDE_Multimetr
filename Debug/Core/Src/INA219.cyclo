@@ -2,7 +2,7 @@ INA219.c:27:10:Read16	1
 INA219.c:51:19:Write16	1
 INA219.c:64:10:INA219_ReadBusVoltage	1
 INA219.c:77:9:INA219_ReadCurrent_raw	1
-INA219.c:90:9:INA219_ReadCurrent	1
+INA219.c:90:7:INA219_ReadCurrent	1
 INA219.c:104:10:INA219_ReadShuntVolage	1
 INA219.c:116:10:INA219_ReadPower	1
 INA219.c:131:7:INA219_GetBatteryLife	2

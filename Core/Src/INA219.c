@@ -15,7 +15,7 @@ enum BatteryState batteryState;
 bool isFirst;
 
 uint16_t ina219_calibrationValue;
-int16_t ina219_currentDivider_mA;
+float ina219_currentDivider_mA;
 int16_t ina219_powerMultiplier_mW;
 
 /*
@@ -87,9 +87,9 @@ int16_t INA219_ReadCurrent_raw(INA219_t *ina219)
  * @param:		Pointer to the device object that was made from the struct. EX:  (&ina219)
  * @return: 	The current reading convereted to milliamps
  */
-int16_t INA219_ReadCurrent(INA219_t *ina219)
+float INA219_ReadCurrent(INA219_t *ina219)
 {
-	int16_t result = INA219_ReadCurrent_raw(ina219);
+	float result = INA219_ReadCurrent_raw(ina219);
 
 	return (result / ina219_currentDivider_mA );
 }
@@ -336,7 +336,7 @@ void INA219_setCalibration_16V_400mA(INA219_t *ina219)
 	                    INA219_CONFIG_SADCRES_12BIT_1S_532US |
 	                    INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS;
 
-	ina219_calibrationValue = 8192;
+	ina219_calibrationValue = 6505; 	//было 8192 у автора библтотеки
 	ina219_currentDivider_mA = 20;    // Current LSB = 50uA per bit (1000/50 = 20)
 	ina219_powerMultiplier_mW = 1.0f; // Power LSB = 1mW per bit
 
