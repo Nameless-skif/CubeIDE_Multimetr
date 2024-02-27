@@ -604,7 +604,7 @@ void StartUART_Task(void *argument)
   /* USER CODE BEGIN StartUART_Task */
    QUEUE_t msg;
    char message_ADC[] = "Value ADC = ";
-   char message_vBus[] = "Value vBus[mV] = ";
+   char message_vBus[] = "Value vBus[V] = ";
    char message_vShunt[] = "Value vShunt[mV] = ";
    char message_Current[] = "Value Current[mA] = ";
   /* Infinite loop */
@@ -658,10 +658,10 @@ void StartTFT_Task(void *argument)
 			ILI9341_WriteString(150, 54, msg.Buf, Font_11x18, WHITE, MYFON);
 		}
 	else if(!strcmp(msg.mess, "vShunt")){
-				ILI9341_WriteString(150, 72, msg.Buf, Font_11x18, WHITE, MYFON);
+			ILI9341_WriteString(150, 72, msg.Buf, Font_11x18, WHITE, MYFON);
 			}
 	else if(!strcmp(msg.mess, "Current")){
-				ILI9341_WriteString(150, 90, msg.Buf, Font_11x18, WHITE, MYFON);
+			ILI9341_WriteString(150, 90, msg.Buf, Font_11x18, WHITE, MYFON);
 			}
     osDelay(100);
   }
@@ -680,17 +680,15 @@ void StartINA219_Current_Task(void *argument)
   /* USER CODE BEGIN StartINA219_Current_Task */
   QUEUE_t msg;
   char uart_tx_buff[100];
-  uint16_t current;
+  float current;
   /* Infinite loop */
   for(;;)
   {
 	current = INA219_ReadCurrent(&ina219);
-//	sprintf(uart_tx_buff, "Current: %hu mA\r\n",current);
-	sprintf(uart_tx_buff,"%hu",current);
+	sprintf(uart_tx_buff,"%4.2f",current);
 	strcpy(msg.mess,"Current");
 	strcpy(msg.Buf,uart_tx_buff);
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
-//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
     osDelay(300);
   }
   /* USER CODE END StartINA219_Current_Task */
@@ -718,7 +716,7 @@ void StartInitMyDevice(void *argument)
 	   ILI9341_WriteString(0, 0, "<---Pulsar--->", Font_11x18, WHITE, MYFON);
 	   ILI9341_WriteString(0, 18, "The value of the ADC", Font_11x18, WHITE, MYFON);
 	   ILI9341_WriteString(60, 36, "V", Font_11x18, WHITE, MYFON);
-	   ILI9341_WriteString(0, 54, "vBus[mV] ", Font_11x18, WHITE, MYFON);
+	   ILI9341_WriteString(0, 54, "vBus[V] ", Font_11x18, WHITE, MYFON);
 	   ILI9341_WriteString(0, 72, "vShunt[mV]", Font_11x18, WHITE, MYFON);
 	   ILI9341_WriteString(0, 90, "Current[mA] ", Font_11x18, WHITE, MYFON);
 	   HAL_Delay(100);
@@ -749,17 +747,15 @@ void INA219_vBus_Task(void *argument)
   /* USER CODE BEGIN INA219_vBus_Task */
   QUEUE_t msg;
   char uart_tx_buff[100];
-  uint16_t vbus;
+  float vbus;
   /* Infinite loop */
   for(;;)
   {
-	vbus = INA219_ReadBusVoltage(&ina219);
-//	sprintf(uart_tx_buff, "vbus: %hu mV\r\n",vbus);
-	sprintf(uart_tx_buff, "%hu",vbus);
+	vbus = INA219_ReadBusVoltage(&ina219)/ 1000.0; // переводим в В из мВ
+	sprintf(uart_tx_buff, "%4.2f",vbus);
 	strcpy(msg.mess,"vBus");
 	strcpy(msg.Buf,uart_tx_buff);
 	osMessageQueuePut(myQueue01Handle, &msg, 0, osWaitForever); //Поместили в очередь данные
-//	HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
     osDelay(70);
   }
   /* USER CODE END INA219_vBus_Task */

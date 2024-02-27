@@ -10,8 +10,8 @@ main.c:574:6:StartADC_Task	1
 main.c:602:6:StartUART_Task	5
 main.c:646:6:StartTFT_Task	5
 main.c:678:6:StartINA219_Current_Task	1
-main.c:706:6:StartInitMyDevice	2
-main.c:747:6:INA219_vBus_Task	1
-main.c:775:6:INA219_vShunt_Task	1
-main.c:804:6:HAL_TIM_PeriodElapsedCallback	2
-main.c:821:6:Error_Handler	1
+main.c:704:6:StartInitMyDevice	2
+main.c:745:6:INA219_vBus_Task	1
+main.c:771:6:INA219_vShunt_Task	1
+main.c:800:6:HAL_TIM_PeriodElapsedCallback	2
+main.c:817:6:Error_Handler	1
