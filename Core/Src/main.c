@@ -148,6 +148,18 @@ const osThreadAttr_t INA219_vShunt_attributes = {
   .stack_size = 350 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for ManagementMatri */
+osThreadId_t ManagementMatriHandle;
+uint32_t ManagementMatriBuffer[ 250 ];
+osStaticThreadDef_t ManagementMatriControlBlock;
+const osThreadAttr_t ManagementMatri_attributes = {
+  .name = "ManagementMatri",
+  .cb_mem = &ManagementMatriControlBlock,
+  .cb_size = sizeof(ManagementMatriControlBlock),
+  .stack_mem = &ManagementMatriBuffer[0],
+  .stack_size = sizeof(ManagementMatriBuffer),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
 uint8_t myQueue01Buffer[ 10 * sizeof( QUEUE_t ) ];
@@ -179,6 +191,7 @@ void StartINA219_Current_Task(void *argument);
 void StartInitMyDevice(void *argument);
 void INA219_vBus_Task(void *argument);
 void INA219_vShunt_Task(void *argument);
+void StartManagementMatrix(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -234,6 +247,7 @@ int main(void)
 //   sprintf(uart_tx_buff, "**********		Hello battery app	 **********\r\n");
 //   HAL_UART_Transmit(&huart1, uart_tx_buff, strlen(uart_tx_buff), 100);
 
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -285,6 +299,9 @@ int main(void)
   /* creation of INA219_vShunt */
   INA219_vShuntHandle = osThreadNew(INA219_vShunt_Task, NULL, &INA219_vShunt_attributes);
 
+  /* creation of ManagementMatri */
+  ManagementMatriHandle = osThreadNew(StartManagementMatrix, NULL, &ManagementMatri_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -326,7 +343,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -341,12 +358,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -490,7 +507,7 @@ static void MX_SPI2_Init(void)
   /* SPI2 parameter configuration*/
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
-  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.Direction = SPI_DIRECTION_1LINE;
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
@@ -830,6 +847,30 @@ void INA219_vShunt_Task(void *argument)
   /* USER CODE END INA219_vShunt_Task */
 }
 
+/* USER CODE BEGIN Header_StartManagementMatrix */
+/**
+* @brief Function implementing the ManagementMatri thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartManagementMatrix */
+void StartManagementMatrix(void *argument)
+{
+  /* USER CODE BEGIN StartManagementMatrix */
+	uint8_t SPI2_Data[1];
+	SPI2_Data[0] = 232;
+	/* Infinite loop */
+  for(;;)
+  {
+	HAL_SPI_Transmit(&hspi2, (uint8_t*)SPI2_Data, 1, osWaitForever);
+//	HAL_SPI_Transmit(&hspi2, tranmit_Data, 1, 100);
+//	GPIOB ->BSRR|= GPIO_BSRR_BS12;
+//	GPIOB ->BSRR|= GPIO_BSRR_BR12;
+    osDelay(1);
+  }
+  /* USER CODE END StartManagementMatrix */
+}
+
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM4 interrupt took place, inside
@@ -847,7 +888,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+  {
+    if (hspi->Instance == SPI1)
+    {
+      // Передача завершена
+    	ILI9341_WriteString(20, 120, "Trancmitt complete", Font_16x26, WHITE, MYFON);
+  }
+  else {
+	  ILI9341_WriteString(20, 120, "Not complete", Font_16x26, WHITE, MYFON);
+}}
   /* USER CODE END Callback 1 */
 }
 
