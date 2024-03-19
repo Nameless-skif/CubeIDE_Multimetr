@@ -30,6 +30,19 @@ typedef StaticTask_t osStaticThreadDef_t;
 typedef StaticQueue_t osStaticMessageQDef_t;
 /* USER CODE BEGIN PTD */
 
+uint8_t number74HC595;	// номер подключаемой мк 74HC595 по контакту "защелки" ST_CP
+uint8_t numberMass; // номер вычисленного элемента в массиве
+
+/*Массив адресов пинов, подключенных к пинам ST_CP микросхем 74HC595  */
+uint16_t mass74HC595[] = {
+		((uint16_t)0x1000),	//ST_CP_1     GPIO_PIN_12
+		((uint16_t)0x0100),	//ST_CP_2     GPIO_PIN_8
+		((uint16_t)0x0010),	//ST_CP_3     GPIO_PIN_4
+		((uint16_t)0x0008),	//ST_CP_4     GPIO_PIN_3
+		((uint16_t)0x4000),	//ST_CP_5     GPIO_PIN_14
+		((uint16_t)0x0200),	//ST_CP_6     GPIO_PIN_9
+};
+
 typedef enum {
 	vBus,
 	vShunt,
@@ -194,13 +207,54 @@ void StartInitMyDevice(void *argument);
 void INA219_vBus_Task(void *argument);
 void INA219_vShunt_Task(void *argument);
 void StartManagementMatrix(void *argument);
-
+void Clear_74HC595(void);
+void EnableOut_74HC595(void);
+void DisableOut_74HC595(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/*Функция сброса в 0 входного(буферного) регистра микросхем 74HC595*/
+void Clear_74HC595(){
+
+	GPIOA-> BSRR|= GPIO_BSRR_BR8; // вывод MR 74HC595 в "0"(сброс)		(подключен параллельно ко всем микросхемам 74HC595)
+	GPIOA-> BSRR|= GPIO_BSRR_BS8; // вывод MR 74HC595 в "1"(сброс выкл)
+
+	/*Очищаем регистр вкл паралелльных выходов, перенося в него 0*/
+	GPIOB-> BSRR|= GPIO_BSRR_BS12;	// "Защелка" для вывода данных на порты выхода 1-ой мк 74HC595
+    GPIOB-> BSRR|= GPIO_BSRR_BR12;
+
+    GPIOB-> BSRR|= GPIO_BSRR_BS8;		// "Защелка" для вывода данных на порты выхода 2-ой мк 74HC595
+    GPIOB-> BSRR|= GPIO_BSRR_BR8;
+
+    GPIOB-> BSRR|= GPIO_BSRR_BS4;		// "Защелка" для вывода данных на порты выхода 3-ой мк 74HC595
+    GPIOB-> BSRR|= GPIO_BSRR_BR4;
+
+    GPIOB-> BSRR|= GPIO_BSRR_BS3;		// "Защелка" для вывода данных на порты выхода 4-ой мк 74HC595
+    GPIOB-> BSRR|= GPIO_BSRR_BR3;
+
+    GPIOB-> BSRR|= GPIO_BSRR_BS14;		// "Защелка" для вывода данных на порты выхода 5-ой мк 74HC595
+    GPIOB-> BSRR|= GPIO_BSRR_BR14;
+
+    GPIOB-> BSRR|= GPIO_BSRR_BS9;		// "Защелка" для вывода данных на порты выхода 6-ой мк 74HC595
+    GPIOB-> BSRR|= GPIO_BSRR_BR9;
+};
+
+
+/*Функция включения входного(буферного) регистра микросхем 74HC595*/
+void EnableOut_74HC595(){
+	GPIOA-> BSRR|= GPIO_BSRR_BS8; // вывод MR 74HC595 в "1"(сброс выкл)
+};
+
+
+/*Функция выключения входного(буферного) регистра микросхем 74HC595*/
+void DisableOut_74HC595(void){
+	GPIOA-> BSRR|= GPIO_BSRR_BR8; // вывод MR 74HC595 в "0"(сброс)		(подключен параллельно ко всем микросхемам 74HC595)
+};
+
 INA219_t ina219;
 /* USER CODE END 0 */
 
@@ -238,8 +292,17 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
-
+  uint8_t SPI2_Data[] = {1,2,4,8,16,32,64,128};
+  EnableOut_74HC595();
+  for (uint8_t i = 0; i <= 15; i++) {
+	  number74HC595 = i / 8;
+	  numberMass = i - (i / 8) * 8;
+	  HAL_SPI_Transmit(&hspi2, &SPI2_Data[numberMass], 1, osWaitForever); // &SPI2_Data[i] -> передавать нужно указатель
+	  HAL_GPIO_WritePin(GPIOB, mass74HC595[number74HC595],GPIO_PIN_SET );
+	  HAL_GPIO_WritePin(GPIOB, mass74HC595[number74HC595],GPIO_PIN_RESET );
+	  HAL_Delay(1000);
+	  Clear_74HC595();
+  }
 //  /* Код для ina219   */
 //  unsigned char uart_tx_buff[100];
 //  uint16_t vbus, vshunt, current, config;
@@ -615,16 +678,29 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, TOUCH_CS_Pin|TFT_CS_Pin|TFT_RST_Pin|TFT_DC_Pin
-                          |GPIO_PIN_12, GPIO_PIN_RESET);
+                          |HC595_ST_CP1_Pin|HC595_ST_CP5_Pin|HC595_ST_CP4_Pin|HC595_ST_CP3_Pin
+                          |HC595_ST_CP2_Pin|HC595_ST_CP6_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(HC595_MR_GPIO_Port, HC595_MR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : TOUCH_CS_Pin TFT_CS_Pin TFT_RST_Pin TFT_DC_Pin
-                           PB12 */
+                           HC595_ST_CP1_Pin HC595_ST_CP5_Pin HC595_ST_CP4_Pin HC595_ST_CP3_Pin
+                           HC595_ST_CP2_Pin HC595_ST_CP6_Pin */
   GPIO_InitStruct.Pin = TOUCH_CS_Pin|TFT_CS_Pin|TFT_RST_Pin|TFT_DC_Pin
-                          |GPIO_PIN_12;
+                          |HC595_ST_CP1_Pin|HC595_ST_CP5_Pin|HC595_ST_CP4_Pin|HC595_ST_CP3_Pin
+                          |HC595_ST_CP2_Pin|HC595_ST_CP6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : HC595_MR_Pin */
+  GPIO_InitStruct.Pin = HC595_MR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(HC595_MR_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -887,20 +963,18 @@ void INA219_vShunt_Task(void *argument)
 void StartManagementMatrix(void *argument)
 {
   /* USER CODE BEGIN StartManagementMatrix */
-  uint8_t SPI2_Data[] = {1,2,4,8,16,32,64,128};
-  uint8_t ss = 21;
-  uint8_t *ptrSS = &ss;
-	/* Infinite loop */
-  for(;;)
-  {
-	  	  for (uint8_t i = 0; i <=7 ;i++) {
-	  	  HAL_SPI_Transmit(&hspi2, &SPI2_Data[i], 1, osWaitForever); // &SPI2_Data[i] -> передавать нужно указатель
-	  	  GPIOB-> BSRR|= GPIO_BSRR_BS12;	// "Защелка" для вывода данных на порты выхода 74HC595
-	  	  GPIOB-> BSRR|= GPIO_BSRR_BR12;
-	  	  HAL_Delay(500);
-	  	  	  }
-    osDelay(1000);
-  }
+//  uint8_t SPI2_Data[] = {1,2,4,8,16,32,64,128};
+//	/* Infinite loop */
+//  for(;;)
+//  {
+//	  	  for (uint8_t i = 0; i <=7 ;i++) {
+//	  	  HAL_SPI_Transmit(&hspi2, &SPI2_Data[i], 1, osWaitForever); // &SPI2_Data[i] -> передавать нужно указатель
+//	  	  GPIOB-> BSRR|= GPIO_BSRR_BS12;	// "Защелка" для вывода данных на порты выхода 74HC595
+//	  	  GPIOB-> BSRR|= GPIO_BSRR_BR12;
+//	  	  HAL_Delay(400);
+//	  	  	  }
+//    osDelay(1000);
+//  }
   /* USER CODE END StartManagementMatrix */
 }
 

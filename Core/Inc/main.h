@@ -68,6 +68,7 @@ void Error_Handler(void);
 #define TFT_RST_GPIO_Port GPIOB
 #define TFT_DC_Pin GPIO_PIN_11
 #define TFT_DC_GPIO_Port GPIOB
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -79,6 +80,20 @@ void Error_Handler(void);
 #define TFT_RST_GPIO_Port GPIOB
 #define TFT_DC_Pin GPIO_PIN_11
 #define TFT_DC_GPIO_Port GPIOB
+#define HC595_ST_CP1_Pin GPIO_PIN_12
+#define HC595_ST_CP1_GPIO_Port GPIOB
+#define HC595_ST_CP5_Pin GPIO_PIN_14
+#define HC595_ST_CP5_GPIO_Port GPIOB
+#define HC595_MR_Pin GPIO_PIN_8
+#define HC595_MR_GPIO_Port GPIOA
+#define HC595_ST_CP4_Pin GPIO_PIN_3
+#define HC595_ST_CP4_GPIO_Port GPIOB
+#define HC595_ST_CP3_Pin GPIO_PIN_4
+#define HC595_ST_CP3_GPIO_Port GPIOB
+#define HC595_ST_CP2_Pin GPIO_PIN_8
+#define HC595_ST_CP2_GPIO_Port GPIOB
+#define HC595_ST_CP6_Pin GPIO_PIN_9
+#define HC595_ST_CP6_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
