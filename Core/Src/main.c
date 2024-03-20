@@ -207,9 +207,7 @@ void StartInitMyDevice(void *argument);
 void INA219_vBus_Task(void *argument);
 void INA219_vShunt_Task(void *argument);
 void StartManagementMatrix(void *argument);
-void Clear_74HC595(void);
-void EnableOut_74HC595(void);
-void DisableOut_74HC595(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
